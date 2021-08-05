@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -13,6 +12,7 @@ import (
 const api = "https://ygocdb.com/card/"
 
 var deckPath string
+var target string
 
 type card struct {
 	id        string
@@ -24,13 +24,19 @@ type card struct {
 	attribute string
 }
 
-func init() {
-	flag.StringVar(&deckPath, "p", "", "deck file path")
-	flag.Parse()
-}
-
 func main() {
-	if deckPath == "" {
+	fmt.Println("请输入卡组（.ydk文件）路径（若输入*则自动查找当前目录）：")
+	_, err := fmt.Scanln(&deckPath)
+	if err != nil {
+		panic(err.Error())
+	}
+	fmt.Println("请输入想要检索的卡（若输入*则输出卡组中所有检索路径）：")
+	_, err = fmt.Scanln(&target)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	if deckPath == "*" {
 		pwd, _ := ioutil.ReadDir(".")
 		for _, f := range pwd {
 			if strings.HasSuffix(f.Name(), ".ydk") {
@@ -120,18 +126,19 @@ func getRoutes(cards []card) {
 	n := len(cards)
 	for i := 0; i < n; i++ {
 		c1 := cards[i]
-		for j := i + 1; j < n; j++ {
+		for j := 0; j < n; j++ {
 			c2 := cards[j]
 			if check(c1, c2) {
 				for k := 0; k < n; k++ {
 					c3 := cards[k]
-					if check(c2, c3) {
+					if check(c2, c3) && (target == "*" || strings.Contains(c3.name, target)) {
 						fmt.Printf("%s -> %s -> %s\n", c1.name, c2.name, c3.name)
 					}
 				}
 			}
 		}
 	}
+
 }
 
 func check(a, b card) bool {
