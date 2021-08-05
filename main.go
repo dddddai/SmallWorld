@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/liushuochen/gotable"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -13,6 +14,10 @@ const api = "https://ygocdb.com/card/"
 
 var deckPath string
 var target string
+var hand = "展示手牌"
+var deck = "展示卡组"
+var search = "检索"
+var table, _ = gotable.Create(hand, deck, search)
 
 type card struct {
 	id        string
@@ -50,7 +55,14 @@ func main() {
 	fmt.Println("Monsters:")
 	cards := getCards(ids)
 	fmt.Println("Routes:")
+
+	table.Align(hand, gotable.Left)
+	table.Align(deck, gotable.Left)
+	table.Align(search, gotable.Left)
+
 	getRoutes(cards)
+	//table.CloseBorder()
+	table.PrintTable()
 	fmt.Println("按Ctrl+C退出")
 	select {}
 }
@@ -103,9 +115,6 @@ func getCards(ids []string) []card {
 			continue
 		}
 		start += 2
-		if err != nil {
-			panic("Failed to get card info: " + err.Error())
-		}
 		c := card{
 			id:        id,
 			name:      getName(s),
@@ -132,13 +141,12 @@ func getRoutes(cards []card) {
 				for k := 0; k < n; k++ {
 					c3 := cards[k]
 					if check(c2, c3) && (target == "*" || strings.Contains(c3.name, target)) {
-						fmt.Printf("%s -> %s -> %s\n", c1.name, c2.name, c3.name)
+						table.AddRow(map[string]string{hand: c1.name, deck: c2.name, search: c3.name})
 					}
 				}
 			}
 		}
 	}
-
 }
 
 func check(a, b card) bool {
