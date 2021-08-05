@@ -5,7 +5,7 @@
 
 基于 https://ygocdb.com
 
-## Build
+## Start
 
 
 #### Windows
