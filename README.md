@@ -17,12 +17,3 @@ git clone git@github.com:dddddai/SmallWorld.git
 cd SmallWorld
 go build -ldflags="-s -w" -o SmallWorld main.go
 ```
-
-## Usage
-
-- 将SmallWorld.exe与ydk文件放在同一目录下
-
-
-- 或者使用`-p`参数指定ydk文件的路径，例如 `SmallWorld.exe -p path/to/mydeck.ydk`
-
-运行即可打印卡组中的所有检索路径
