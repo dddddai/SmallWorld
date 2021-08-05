@@ -45,6 +45,8 @@ func main() {
 	cards := getCards(ids)
 	fmt.Println("Routes:")
 	getRoutes(cards)
+	fmt.Println("按Ctrl+C退出")
+	select {}
 }
 
 func getCardIDs(deckPath string) []string {
