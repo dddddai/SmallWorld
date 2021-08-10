@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"github.com/liushuochen/gotable"
 	"io/ioutil"
@@ -10,7 +11,7 @@ import (
 	"strings"
 )
 
-const api = "https://ygocdb.com/card/"
+const api = "https://ygocdb.com/api/v0/?search="
 
 var deckPath string
 var target string
@@ -20,13 +21,12 @@ var search = "检索"
 var table, _ = gotable.Create(hand, deck, search)
 
 type card struct {
-	id        string
 	name      string
-	atk       string
-	def       string
-	level     string
-	race      string
-	attribute string
+	atk       float64
+	def       float64
+	level     float64
+	race      float64
+	attribute float64
 }
 
 func main() {
@@ -45,16 +45,15 @@ func main() {
 		pwd, _ := ioutil.ReadDir(".")
 		for _, f := range pwd {
 			if strings.HasSuffix(f.Name(), ".ydk") {
-				deckPath = "./" + f.Name()
+				deckPath = f.Name()
 				break
 			}
 		}
 	}
 	ids := getCardIDs(deckPath)
-	//fmt.Println(ids)
-	fmt.Println("Monsters:")
+	fmt.Println("\nMonsters:\n")
 	cards := getCards(ids)
-	fmt.Println("Routes:")
+	fmt.Println("\nRoutes:")
 
 	table.Align(hand, gotable.Left)
 	table.Align(deck, gotable.Left)
@@ -108,25 +107,26 @@ func getCards(ids []string) []card {
 		if err != nil {
 			panic("Failed to get card info: " + err.Error())
 		}
-		s := string(b)
-		start, levelFlag := getlr(s, "] ", "★")
-		if levelFlag == -1 {
-			// not a monster
+		m := make(map[string]interface{})
+		err = json.Unmarshal(b[1:len(b)-1], &m)
+		if err != nil {
+			panic("Failed to get card info: " + err.Error())
+		}
+		data := m["data"].(map[string]interface{})
+		if data["attribute"].(float64) == 0 {
 			continue
 		}
-		start += 2
 		c := card{
-			id:        id,
-			name:      getName(s),
-			atk:       getAtk(s[levelFlag:]),
-			def:       getDef(s[levelFlag:]),
-			level:     getLevel(s[levelFlag:]),
-			race:      getRace(s[start:]),
-			attribute: getAttribute(s[start:]),
+			name:      m["cn_name"].(string),
+			atk:       data["atk"].(float64),
+			def:       data["def"].(float64),
+			level:     data["level"].(float64),
+			race:      data["race"].(float64),
+			attribute: data["attribute"].(float64),
 		}
 		res.Body.Close()
 		cards = append(cards, c)
-		fmt.Printf("%+v\n\n", c)
+		fmt.Println(c.name + "\n")
 	}
 	return cards
 }
@@ -179,40 +179,4 @@ func check(a, b card) bool {
 		equal = true
 	}
 	return equal
-}
-
-func getRace(s string) string {
-	return between(s, "", "/")
-}
-func getName(s string) string {
-	return between(s, "<h2><span>", "</span")
-}
-
-func getAttribute(s string) string {
-	return between(s, "/", "<br")
-}
-
-func getAtk(s string) string {
-	return between(s, "] ", "/")
-}
-
-func getLevel(s string) string {
-	return between(s, "★", "]")
-}
-
-func getDef(s string) string {
-	return between(s, "/", "<hr")
-}
-
-func between(s, left, right string) string {
-	l, r := getlr(s, left, right)
-	return s[l+len(left) : r]
-}
-
-func getlr(s, left, right string) (int, int) {
-	l := strings.Index(s, left)
-	if l == -1 {
-		return -1, -1
-	}
-	return l, strings.Index(s[l:], right) + l
 }
