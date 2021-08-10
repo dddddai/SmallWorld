@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/gen2brain/dlgs"
 	"github.com/liushuochen/gotable"
 	"io/ioutil"
 	"net/http"
@@ -14,8 +15,7 @@ import (
 
 const api = "https://ygocdb.com/api/v0/?search="
 
-var deckPath string
-var target string
+var target = "*"
 var hand = "展示手牌"
 var deck = "展示卡组"
 var search = "检索"
@@ -31,28 +31,18 @@ type card struct {
 }
 
 func main() {
-	fmt.Println("请输入卡组（.ydk文件）路径（若输入*则自动查找当前目录）：")
-	_, err := fmt.Scanln(&deckPath)
-	if err != nil {
-		panic(err.Error())
+	deckPath, ok, _ := dlgs.File("请选择要查询的卡组文件", "*.ydk", false)
+	if !ok {
+		dlgs.Error("Error", "Faied to open deck file")
+		return
 	}
-	fmt.Println("请输入想要检索的卡（若输入*则输出卡组中所有检索路径）：")
-	_, err = fmt.Scanln(&target)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	if deckPath == "*" {
-		pwd, _ := ioutil.ReadDir(".")
-		for _, f := range pwd {
-			if strings.HasSuffix(f.Name(), ".ydk") {
-				deckPath = f.Name()
-				break
-			}
-		}
+	target, ok, _ = dlgs.Entry("请输入要检索的卡名", "要检索的卡(输入*表示检索所有怪兽)", "")
+	if !ok {
+		dlgs.Error("Error", "Faied to read target")
+		return
 	}
 	ids := getCardIDs(deckPath)
-	fmt.Println("\nMonsters:\n")
+	fmt.Println("Monsters:\n")
 	cards := getCards(ids)
 	fmt.Println("\nRoutes:")
 
@@ -63,6 +53,7 @@ func main() {
 	getRoutes(cards)
 	//table.CloseBorder()
 	table.PrintTable()
+	fmt.Println("\n查询完毕，感谢使用^_^\n")
 	fmt.Println("按Ctrl+C退出")
 	select {}
 }
