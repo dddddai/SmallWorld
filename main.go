@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/liushuochen/gotable"
@@ -107,15 +108,16 @@ func getCards(ids []string) []card {
 		if err != nil {
 			panic("Failed to get card info: " + err.Error())
 		}
+		if !bytes.ContainsRune(b, '★') {
+			// not a monster
+			continue
+		}
 		m := make(map[string]interface{})
 		err = json.Unmarshal(b[1:len(b)-1], &m)
 		if err != nil {
 			panic("Failed to get card info: " + err.Error())
 		}
 		data := m["data"].(map[string]interface{})
-		if data["attribute"].(float64) == 0 {
-			continue
-		}
 		c := card{
 			name:      m["cn_name"].(string),
 			atk:       data["atk"].(float64),
