@@ -16,9 +16,11 @@ import (
 const api = "https://ygocdb.com/api/v0/?search="
 
 var target = "*"
-var hand = "展示手牌"
-var deck = "展示卡组"
-var search = "检索"
+
+const hand = "展示手牌"
+const deck = "展示卡组"
+const search = "检索"
+
 var table, _ = gotable.Create(hand, deck, search)
 
 type card struct {
