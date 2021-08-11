@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/gen2brain/dlgs"
@@ -98,18 +97,22 @@ func getCards(ids []string) []card {
 			panic("Failed to get card info: " + err.Error())
 		}
 		b, err := ioutil.ReadAll(res.Body)
+		res.Body.Close()
 		if err != nil {
 			panic("Failed to get card info: " + err.Error())
 		}
-		if !bytes.ContainsRune(b, '★') {
-			// not a monster
-			continue
-		}
+
 		m := make(map[string]interface{})
 		err = json.Unmarshal(b[1:len(b)-1], &m)
 		if err != nil {
 			panic("Failed to get card info: " + err.Error())
 		}
+
+		if !strings.HasPrefix(m["text"].(map[string]interface{})["types"].(string), "[怪") {
+			// not a monster
+			continue
+		}
+
 		data := m["data"].(map[string]interface{})
 		c := card{
 			name:      m["cn_name"].(string),
@@ -119,7 +122,6 @@ func getCards(ids []string) []card {
 			race:      data["race"].(float64),
 			attribute: data["attribute"].(float64),
 		}
-		res.Body.Close()
 		cards = append(cards, c)
 		fmt.Println(c.name + "\n")
 	}
