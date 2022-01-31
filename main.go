@@ -4,21 +4,24 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/gen2brain/dlgs"
-	"github.com/liushuochen/gotable"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/gen2brain/dlgs"
+	"github.com/liushuochen/gotable"
 )
 
 const api = "https://ygocdb.com/api/v0/?search="
 
 var target = "*"
 
-const hand = "展示手牌"
-const deck = "展示卡组"
-const search = "检索"
+const (
+	hand   = "展示手牌"
+	deck   = "展示卡组"
+	search = "检索"
+)
 
 var table, _ = gotable.Create(hand, deck, search)
 
@@ -52,7 +55,7 @@ func main() {
 	table.Align(search, gotable.Left)
 
 	getRoutes(cards)
-	//table.CloseBorder()
+	// table.CloseBorder()
 	table.PrintTable()
 	fmt.Println("\n查询完毕，感谢使用^_^\n")
 	fmt.Println("按Ctrl+C退出")
@@ -103,19 +106,22 @@ func getCards(ids []string) []card {
 		}
 
 		m := make(map[string]interface{})
-		err = json.Unmarshal(b[1:len(b)-1], &m)
+		err = json.Unmarshal(b, &m)
 		if err != nil {
 			panic("Failed to get card info: " + err.Error())
 		}
 
-		if !strings.HasPrefix(m["text"].(map[string]interface{})["types"].(string), "[怪") {
+		info := m["result"].([]interface{})[0].(map[string]interface{})
+
+		if !strings.HasPrefix(info["text"].(map[string]interface{})["types"].(string), "[怪") {
 			// not a monster
 			continue
 		}
 
-		data := m["data"].(map[string]interface{})
+		data := info["data"].(map[string]interface{})
+
 		c := card{
-			name:      m["cn_name"].(string),
+			name:      info["cn_name"].(string),
 			atk:       data["atk"].(float64),
 			def:       data["def"].(float64),
 			level:     data["level"].(float64),
