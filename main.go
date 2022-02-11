@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -68,22 +69,29 @@ func getCardIDs(deckPath string) []string {
 		panic("Can not find deck file: " + err.Error())
 	}
 	reader := bufio.NewReader(deck)
-	start := false
 	m := make(map[string]struct{}, 60)
 	ids := make([]string, 0, 60)
+	start := false
+	extra := false
 	for {
 		buf, _, err := reader.ReadLine()
-		line := string(buf)
 		if err != nil {
+			if err == io.EOF {
+				break
+			}
 			panic("Failed to read deck file: " + err.Error())
 		}
+		line := string(buf)
 		if line == "#main" {
 			start = true
 		} else if start {
-			if line == "#extra" {
-				break
-			}
-			if _, ok := m[line]; !ok {
+			if extra {
+				if line == "!side" {
+					extra = false
+				}
+			} else if line == "#extra" {
+				extra = true
+			} else if _, ok := m[line]; !ok {
 				ids = append(ids, line)
 				m[line] = struct{}{}
 			}
